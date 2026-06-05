@@ -6,16 +6,24 @@ export default async function handler(req, res) {
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'POST') return res.status(405).json({error: 'POST only'});
 
-  // Parse le body manuellement
+  // Debug : log ce qu'on reçoit
+  console.log('Body type:', typeof req.body);
+  console.log('Body:', req.body);
+
   let prompt;
-  try {
-    if (typeof req.body === 'string') {
+
+  // Essayer plusieurs façons de récupérer le prompt
+  if (req.body?.prompt) {
+    prompt = req.body.prompt;
+  } else if (typeof req.body === 'string') {
+    try {
       prompt = JSON.parse(req.body).prompt;
-    } else if (typeof req.body === 'object') {
-      prompt = req.body.prompt;
+    } catch (e) {
+      console.error('Parse error:', e);
+      return res.status(400).json({error: 'Invalid JSON body'});
     }
-  } catch (e) {
-    return res.status(400).json({error: 'Invalid body'});
+  } else {
+    return res.status(400).json({error: `Got body: ${JSON.stringify(req.body)}`});
   }
 
   if (!prompt) return res.status(400).json({error: 'prompt required'});
